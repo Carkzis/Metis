@@ -46,6 +46,14 @@
       button:hover {
         background: #1d4ed8;
       }
+      .remove-button {
+        background: #dc2626;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+      }
+      .remove-button:hover {
+        background: #b91c1c;
+      }
       .picked-user {
         margin-top: 1rem;
         padding: 1rem;
@@ -65,6 +73,11 @@
         gap: 1rem;
         padding: 0.75rem 0.5rem;
         border-bottom: 1px solid #e5e7eb;
+      }
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
       }
       .user-meta {
         display: flex;
@@ -122,11 +135,16 @@
         }
 
         const minutes = Math.floor(seconds / 60);
-        if (minutes < 24 * 60) {
+        if (minutes < 60) {
           return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
         }
 
-        const days = Math.floor(minutes / (24 * 60));
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) {
+          return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+        }
+
+        const days = Math.floor(hours / 24);
         if (days < 7) {
           return `${days} day${days === 1 ? '' : 's'} ago`;
         }
@@ -149,7 +167,10 @@
           .map(
             (user) => `
               <li>
-                <span>${user.name}</span>
+                <span class="user-info">
+                  <span>${user.name}</span>
+                  <button class="remove-button" data-name="${user.name}">Remove</button>
+                </span>
                 <span class="user-meta">
                   <span class="percentage">${Number(user.pickPercentage).toFixed(2)}%</span>
                   <span class="last-picked">Last picked: ${formatLastPicked(user.dateLastPicked)}</span>
@@ -158,6 +179,24 @@
             `
           )
           .join('');
+
+        document.querySelectorAll('.remove-button').forEach((button) => {
+          button.addEventListener('click', async () => {
+            await removeUser(button.dataset.name);
+          });
+        });
+      }
+
+      async function removeUser(name) {
+        const response = await fetch(`/users/${encodeURIComponent(name)}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) {
+          throw new Error('Could not remove user');
+        }
+
+        await fetchUsers();
       }
 
       async function addUser() {
