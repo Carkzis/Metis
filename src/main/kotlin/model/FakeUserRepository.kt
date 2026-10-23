@@ -8,23 +8,23 @@ class FakeUserRepository : UserRepository {
         UserWithDate(name = "Dara", dateLastPicked = "2026-10-23T10:33:19Z")
     )
 
-    override fun allUsers(): List<UserWithPickPercentage> {
+    override suspend fun allUsers(): List<UserWithPickPercentage> {
         return weightUsers(userWithDates)
     }
 
-    override fun userByName(name: String): UserWithDate? = userWithDates.find { it.name.equals(name, ignoreCase = true) }
+    override suspend fun userByName(name: String): UserWithDate? = userWithDates.find { it.name.equals(name, ignoreCase = true) }
 
-    override fun pickUser(): UserWithPickPercentage? {
+    override suspend fun pickUser(): UserWithDate? {
         return pickUserFromWeightedList(userWithDates)
     }
 
-    override fun addUser(userWithDate: UserWithDate) {
+    override suspend fun addUser(userWithDate: UserWithDate) {
         if (userByName(userWithDate.name) != null) {
             throw IllegalStateException("Cannot duplicate task names!")
         }
         userWithDates.add(userWithDate)
     }
 
-    override fun removeUser(name: String) = userWithDates.removeIf { it.name == name }
+    override suspend fun removeUser(name: String) = userWithDates.removeIf { it.name == name }
 
 }

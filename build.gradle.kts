@@ -29,6 +29,8 @@ dependencies {
     implementation(libs.h2database.r2dbc)
     implementation(libs.logback.classic)
     implementation(libs.postgresql)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.dao)
 
     testImplementation(kotlin("test"))
     testImplementation(ktorLibs.server.testHost)

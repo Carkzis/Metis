@@ -46,7 +46,7 @@ internal fun weightUsers(users: List<UserWithDate>): List<UserWithPickPercentage
         }
 }
 
-fun pickUserFromWeightedList(users: MutableList<UserWithDate>): UserWithPickPercentage? {
+fun pickUserFromWeightedList(users: MutableList<UserWithDate>): UserWithDate? {
     val weightedUsers = weightUsers(users)
     if (weightedUsers.isEmpty()) return null
 
@@ -67,9 +67,10 @@ fun pickUserFromWeightedList(users: MutableList<UserWithDate>): UserWithPickPerc
             )
 
             users.removeIf { it.name == user.name }
-            users.add(UserWithDate(name = updatedUser.name, dateLastPicked = updatedUser.dateLastPicked))
 
-            return user
+            users.add(updatedUser)
+
+            return updatedUser
         }
         newCumulativeWeight
     }

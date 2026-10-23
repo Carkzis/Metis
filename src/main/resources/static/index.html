@@ -193,7 +193,7 @@
         }
 
         const selectedUser = await response.json();
-        pickedUser.textContent = `Picked user: ${selectedUser.name} (${Number(selectedUser.pickPercentage).toFixed(2)}%)`;
+        pickedUser.textContent = `Picked user: ${selectedUser.name}`;
         pickedUser.style.display = 'block';
 
         await fetchUsers();
