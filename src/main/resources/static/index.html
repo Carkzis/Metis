@@ -49,12 +49,24 @@
       li {
         display: flex;
         justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
         padding: 0.75rem 0.5rem;
         border-bottom: 1px solid #e5e7eb;
+      }
+      .user-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        text-align: right;
       }
       .percentage {
         font-weight: bold;
         color: #374151;
+      }
+      .last-picked {
+        font-size: 0.8rem;
+        color: #6b7280;
       }
       .error {
         color: #b91c1c;
@@ -80,6 +92,34 @@
       const pickedUser = document.getElementById('pickedUser');
       const errorBox = document.getElementById('error');
 
+      function formatLastPicked(dateString) {
+        const date = new Date(dateString);
+        const diffMs = Date.now() - date.getTime();
+        const seconds = Math.max(0, Math.floor(diffMs / 1000));
+
+        if (seconds < 60) {
+          return `${seconds} second${seconds === 1 ? '' : 's'} ago`;
+        }
+
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 24 * 60) {
+          return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+        }
+
+        const days = Math.floor(minutes / (24 * 60));
+        if (days < 7) {
+          return `${days} day${days === 1 ? '' : 's'} ago`;
+        }
+
+        const weeks = Math.floor(days / 7);
+        if (weeks < 4) {
+          return `${weeks} week${weeks === 1 ? '' : 's'} ago`;
+        }
+
+        const months = Math.floor(weeks / 4);
+        return `${months} month${months === 1 ? '' : 's'} ago`;
+      }
+
       async function fetchUsers() {
         const response = await fetch('/users');
         if (!response.ok) throw new Error('Failed to load users');
@@ -90,7 +130,10 @@
             (user) => `
               <li>
                 <span>${user.name}</span>
-                <span class="percentage">${Number(user.pickPercentage).toFixed(2)}%</span>
+                <span class="user-meta">
+                  <span class="percentage">${Number(user.pickPercentage).toFixed(2)}%</span>
+                  <span class="last-picked">Last picked: ${formatLastPicked(user.dateLastPicked)}</span>
+                </span>
               </li>
             `
           )
