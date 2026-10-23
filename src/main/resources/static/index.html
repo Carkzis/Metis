@@ -22,6 +22,18 @@
       h1 {
         margin-top: 0;
       }
+      .controls {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+      input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+      }
       button {
         background: #2563eb;
         color: white;
@@ -77,6 +89,12 @@
   <body>
     <div class="container">
       <h1>User Picker</h1>
+
+      <div class="controls">
+        <input id="newUserName" type="text" placeholder="Enter new user name" />
+        <button id="addUserButton">Add user</button>
+      </div>
+
       <button id="pickButton">Pick a user</button>
 
       <div id="pickedUser" class="picked-user" style="display: none;"></div>
@@ -89,6 +107,8 @@
     <script>
       const userList = document.getElementById('userList');
       const pickButton = document.getElementById('pickButton');
+      const addUserButton = document.getElementById('addUserButton');
+      const newUserName = document.getElementById('newUserName');
       const pickedUser = document.getElementById('pickedUser');
       const errorBox = document.getElementById('error');
 
@@ -140,6 +160,29 @@
           .join('');
       }
 
+      async function addUser() {
+        const name = newUserName.value.trim();
+        if (!name) {
+          errorBox.textContent = 'Please enter a user name';
+          errorBox.style.display = 'block';
+          return;
+        }
+
+        const response = await fetch('/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+
+        if (!response.ok) {
+          throw new Error('Could not add user');
+        }
+
+        newUserName.value = '';
+        errorBox.style.display = 'none';
+        await fetchUsers();
+      }
+
       async function pickUser() {
         errorBox.style.display = 'none';
         pickedUser.style.display = 'none';
@@ -155,6 +198,15 @@
 
         await fetchUsers();
       }
+
+      addUserButton.addEventListener('click', async () => {
+        try {
+          await addUser();
+        } catch (err) {
+          errorBox.textContent = err.message;
+          errorBox.style.display = 'block';
+        }
+      });
 
       pickButton.addEventListener('click', async () => {
         try {
