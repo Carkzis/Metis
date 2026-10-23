@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Picker</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 2rem;
+        background: #f4f7fb;
+        color: #1f2937;
+      }
+      .container {
+        max-width: 700px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      }
+      h1 {
+        margin-top: 0;
+      }
+      button {
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.25rem;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #1d4ed8;
+      }
+      .picked-user {
+        margin-top: 1rem;
+        padding: 1rem;
+        border-radius: 8px;
+        background: #ecfdf5;
+        color: #065f46;
+        font-weight: bold;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+      li {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0.5rem;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .percentage {
+        font-weight: bold;
+        color: #374151;
+      }
+      .error {
+        color: #b91c1c;
+        margin-top: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>User Picker</h1>
+      <button id="pickButton">Pick a user</button>
+
+      <div id="pickedUser" class="picked-user" style="display: none;"></div>
+      <div id="error" class="error" style="display: none;"></div>
+
+      <h2>Users</h2>
+      <ul id="userList"></ul>
+    </div>
+
+    <script>
+      const userList = document.getElementById('userList');
+      const pickButton = document.getElementById('pickButton');
+      const pickedUser = document.getElementById('pickedUser');
+      const errorBox = document.getElementById('error');
+
+      async function fetchUsers() {
+        const response = await fetch('/users');
+        if (!response.ok) throw new Error('Failed to load users');
+        const users = await response.json();
+
+        userList.innerHTML = users
+          .map(
+            (user) => `
+              <li>
+                <span>${user.name}</span>
+                <span class="percentage">${Number(user.pickPercentage).toFixed(2)}%</span>
+              </li>
+            `
+          )
+          .join('');
+      }
+
+      async function pickUser() {
+        errorBox.style.display = 'none';
+        pickedUser.style.display = 'none';
+
+        const response = await fetch('/users/pick');
+        if (!response.ok) {
+          throw new Error('Could not pick a user');
+        }
+
+        const selectedUser = await response.json();
+        pickedUser.textContent = `Picked user: ${selectedUser.name} (${Number(selectedUser.pickPercentage).toFixed(2)}%)`;
+        pickedUser.style.display = 'block';
+
+        await fetchUsers();
+      }
+
+      pickButton.addEventListener('click', async () => {
+        try {
+          await pickUser();
+        } catch (err) {
+          errorBox.textContent = err.message;
+          errorBox.style.display = 'block';
+        }
+      });
+
+      fetchUsers().catch((err) => {
+        errorBox.textContent = err.message;
+        errorBox.style.display = 'block';
+      });
+    </script>
+  </body>
+</html>

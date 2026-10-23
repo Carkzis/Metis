@@ -1,0 +1,9 @@
+ktor:
+  deployment:
+    port: 8080
+  application:
+    modules:
+      - com.carkzis.DIKt.configureDependencyInjection
+      - com.carkzis.SerializationKt.configureSerialization
+      - com.carkzis.ExposedKt.configureExposed
+      - com.carkzis.StatusPagesKt.configureStatusPages
