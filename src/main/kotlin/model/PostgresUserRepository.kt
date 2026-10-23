@@ -8,20 +8,20 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 
 class PostgresUserRepository : UserRepository {
-    override suspend fun allUsers(): List<UserWithPickPercentage> {
+    override suspend fun allUsers(): List<UserWithPickPercentage> = withTransaction {
         val usersWithDates = UserDAO.all().map(::daoToModel)
-        return weightUsers(usersWithDates)
+        weightUsers(usersWithDates)
     }
 
-    override suspend fun userByName(name: String): UserWithDate? {
-        return UserDAO
+    override suspend fun userByName(name: String): UserWithDate? = withTransaction {
+        UserDAO
             .find { (UserTable.name eq name) }
             .limit(1)
             .map(::daoToModel)
             .firstOrNull()
     }
 
-    override suspend fun pickUser(): UserWithDate? {
+    override suspend fun pickUser(): UserWithDate? = withTransaction {
         val usersWithDates = UserDAO.all().map(::daoToModel).toMutableList()
         val pickedUser = pickUserFromWeightedList(usersWithDates)
 
@@ -34,10 +34,10 @@ class PostgresUserRepository : UserRepository {
                 }
         }
 
-        return pickedUser
+        pickedUser
     }
 
-    override suspend fun addUser(userWithDate: UserWithDate) {
+    override suspend fun addUser(userWithDate: UserWithDate): Unit = withTransaction {
         UserDAO.new {
             name = userWithDate.name
             dateLastPicked = userWithDate.dateLastPicked

@@ -10,9 +10,9 @@ import org.jetbrains.exposed.v1.dao.IntEntityClass
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.inTopLevelSuspendTransaction
 
-object UserTable : IntIdTable("user") {
+object UserTable : IntIdTable("picker_user") {
     val name = varchar("name", 50)
-    val dateLastPicked = varchar("date_last_picked", 50)
+    val dateLastPicked = varchar("datelastpicked", 50)
 }
 
 class UserDAO(id: EntityID<Int>) : IntEntity(id) {
