@@ -13,6 +13,7 @@ import org.jetbrains.exposed.v1.jdbc.transactions.inTopLevelSuspendTransaction
 object UserTable : IntIdTable("picker_user") {
     val name = varchar("name", 50)
     val dateLastPicked = varchar("datelastpicked", 50)
+    val isAvailable = bool("isavailable").default(true)
 }
 
 class UserDAO(id: EntityID<Int>) : IntEntity(id) {
@@ -20,6 +21,7 @@ class UserDAO(id: EntityID<Int>) : IntEntity(id) {
 
     var name by UserTable.name
     var dateLastPicked by UserTable.dateLastPicked
+    var isAvailable by UserTable.isAvailable
 }
 
 suspend fun <T> withTransaction(block: suspend JdbcTransaction.() -> T): T = withContext(Dispatchers.IO) {
@@ -28,5 +30,6 @@ suspend fun <T> withTransaction(block: suspend JdbcTransaction.() -> T): T = wit
 
 fun daoToModel(dao: UserDAO) = UserWithDate(
     dao.name,
-    dao.dateLastPicked
+    dao.dateLastPicked,
+    dao.isAvailable
 )

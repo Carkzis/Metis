@@ -93,6 +93,23 @@
         font-size: 0.8rem;
         color: #6b7280;
       }
+      .unavailable .user-name,
+      .unavailable .percentage,
+      .unavailable .last-picked {
+        color: #9ca3af;
+      }
+      .availability-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.8rem;
+        color: #6b7280;
+        cursor: pointer;
+      }
+      .availability-toggle input {
+        flex: none;
+        margin: 0;
+      }
       .error {
         color: #b91c1c;
         margin-top: 1rem;
@@ -166,9 +183,13 @@
         userList.innerHTML = users
           .map(
             (user) => `
-              <li>
+              <li class="${user.isAvailable ? '' : 'unavailable'}">
                 <span class="user-info">
-                  <span>${user.name}</span>
+                  <span class="user-name">${user.name}</span>
+                  <label class="availability-toggle">
+                    <input type="checkbox" class="availability-checkbox" data-name="${user.name}" ${user.isAvailable ? 'checked' : ''} />
+                    Available
+                  </label>
                   <button class="remove-button" data-name="${user.name}">Remove</button>
                 </span>
                 <span class="user-meta">
@@ -180,11 +201,37 @@
           )
           .join('');
 
+        document.querySelectorAll('.availability-checkbox').forEach((checkbox) => {
+          checkbox.addEventListener('change', async () => {
+            try {
+              await setAvailability(checkbox.dataset.name, checkbox.checked);
+            } catch (err) {
+              errorBox.textContent = err.message;
+              errorBox.style.display = 'block';
+              await fetchUsers();
+            }
+          });
+        });
+
         document.querySelectorAll('.remove-button').forEach((button) => {
           button.addEventListener('click', async () => {
             await removeUser(button.dataset.name);
           });
         });
+      }
+
+      async function setAvailability(name, isAvailable) {
+        const response = await fetch(`/users/${encodeURIComponent(name)}/availability`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isAvailable })
+        });
+
+        if (!response.ok) {
+          throw new Error('Could not update availability');
+        }
+
+        await fetchUsers();
       }
 
       async function removeUser(name) {

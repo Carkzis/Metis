@@ -12,7 +12,8 @@ import kotlin.time.Clock
 
 internal fun weightUsers(users: List<UserWithDate>): List<UserWithPickPercentage> {
     val now = Instant.now()
-    val weightedUsers = users.map { userWithDate ->
+    val available = users.filter { it.isAvailable }
+    val weightedUsers = available.map { userWithDate ->
         val weight = userWithDate.dateLastPicked.toInstantOrNull()
             ?.let { Duration.between(it, now).toMillis().coerceAtLeast(0).toDouble() }
             ?: 0.0
@@ -21,33 +22,35 @@ internal fun weightUsers(users: List<UserWithDate>): List<UserWithPickPercentage
     }
 
     val totalWeight = weightedUsers.sumOf { it.second }
+    val equalShare = if (weightedUsers.isEmpty()) 0.0 else 100.0 / weightedUsers.size
 
-    if (totalWeight <= 0.0) {
-        val equalShare = 100.0 / weightedUsers.size
-        return weightedUsers
-            .sortedByDescending { it.second }
-            .map { (userWithDate, _) ->
-                UserWithPickPercentage(
-                    name = userWithDate.name,
-                    dateLastPicked = userWithDate.dateLastPicked,
-                    pickPercentage = equalShare
-                )
-            }
-    }
-
-    return weightedUsers
+    val availableResults = weightedUsers
         .sortedByDescending { it.second }
         .map { (userWithDate, weight) ->
             UserWithPickPercentage(
                 name = userWithDate.name,
                 dateLastPicked = userWithDate.dateLastPicked,
-                pickPercentage = (weight / totalWeight) * 100.0
+                pickPercentage = if (totalWeight <= 0.0) equalShare else (weight / totalWeight) * 100.0,
+                isAvailable = true
             )
         }
+
+    val unavailableResults = users
+        .filterNot { it.isAvailable }
+        .map {
+            UserWithPickPercentage(
+                name = it.name,
+                dateLastPicked = it.dateLastPicked,
+                pickPercentage = 0.0,
+                isAvailable = false
+            )
+        }
+
+    return availableResults + unavailableResults
 }
 
 fun pickUserFromWeightedList(users: MutableList<UserWithDate>): UserWithDate? {
-    val weightedUsers = weightUsers(users)
+    val weightedUsers = weightUsers(users).filter { it.isAvailable }
     if (weightedUsers.isEmpty()) return null
 
     val totalWeight = weightedUsers.sumOf { it.pickPercentage }
@@ -63,7 +66,8 @@ fun pickUserFromWeightedList(users: MutableList<UserWithDate>): UserWithDate? {
 
             val updatedUser = UserWithDate(
                 name = user.name,
-                dateLastPicked = currentDate
+                dateLastPicked = currentDate,
+                isAvailable = true
             )
 
             users.removeIf { it.name == user.name }

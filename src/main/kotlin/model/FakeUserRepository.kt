@@ -25,6 +25,13 @@ class FakeUserRepository : UserRepository {
         userWithDates.add(userWithDate)
     }
 
+    override suspend fun setAvailability(name: String, isAvailable: Boolean): Boolean {
+        val index = userWithDates.indexOfFirst { it.name == name }
+        if (index == -1) return false
+        userWithDates[index] = userWithDates[index].copy(isAvailable = isAvailable)
+        return true
+    }
+
     override suspend fun removeUser(name: String) = userWithDates.removeIf { it.name == name }
 
 }

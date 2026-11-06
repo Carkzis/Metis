@@ -41,7 +41,14 @@ class PostgresUserRepository : UserRepository {
         UserDAO.new {
             name = userWithDate.name
             dateLastPicked = userWithDate.dateLastPicked
+            isAvailable = userWithDate.isAvailable
         }
+    }
+
+    override suspend fun setAvailability(name: String, isAvailable: Boolean): Boolean = withTransaction {
+        val user = UserDAO.find { UserTable.name eq name }.limit(1).firstOrNull()
+        user?.isAvailable = isAvailable
+        user != null
     }
 
     override suspend fun removeUser(name: String): Boolean = withTransaction {

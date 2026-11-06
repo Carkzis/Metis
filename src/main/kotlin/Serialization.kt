@@ -1,5 +1,6 @@
 package com.carkzis
 
+import com.carkzis.model.AvailabilityUpdate
 import com.carkzis.model.User
 import com.carkzis.model.UserRepository
 import com.carkzis.model.UserWithDate
@@ -70,6 +71,21 @@ suspend fun Application.configureSerialization() {
             get("/pick") {
                 val user = repository.pickUser() ?: return@get call.respond(HttpStatusCode.NotFound)
                 call.respond(user)
+            }
+
+            put("/{userName}/availability") {
+                val name = call.parameters["userName"] ?: return@put call.respond(HttpStatusCode.BadRequest)
+
+                try {
+                    val update = call.receive<AvailabilityUpdate>()
+                    if (repository.setAvailability(name, update.isAvailable)) {
+                        call.respond(HttpStatusCode.NoContent)
+                    } else {
+                        call.respond(HttpStatusCode.NotFound)
+                    }
+                } catch (_: JsonConvertException) {
+                    call.respond(HttpStatusCode.BadRequest)
+                }
             }
 
             delete("/{userName}") {

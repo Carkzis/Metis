@@ -89,4 +89,18 @@ class FakeUserRepositoryTest {
         val user = sut.userByName("NonExistentUser")
         assert(user == null)
     }
+
+    @Test
+    fun `test unavailable user is never picked and has zero percentage`() = runTest {
+        assert(sut.setAvailability("Andy", false))
+        val andy = sut.allUsers().first { it.name == "Andy" }
+        assert(!andy.isAvailable && andy.pickPercentage == 0.0)
+        repeat(50) { assert(sut.pickUser()?.name != "Andy") }
+        assert(sut.allUsers().first { it.name == "Andy" }.isAvailable.not())
+    }
+
+    @Test
+    fun `test setAvailability returns false for unknown user`() = runTest {
+        assert(!sut.setAvailability("Nobody", false))
+    }
 }

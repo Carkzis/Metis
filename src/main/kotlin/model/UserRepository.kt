@@ -5,5 +5,6 @@ interface UserRepository {
     suspend fun userByName(name: String): UserWithDate?
     suspend fun pickUser(): UserWithDate?
     suspend fun addUser(userWithDate: UserWithDate)
+    suspend fun setAvailability(name: String, isAvailable: Boolean): Boolean
     suspend fun removeUser(name: String): Boolean
 }
