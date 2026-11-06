@@ -49,7 +49,11 @@ internal fun weightUsers(users: List<UserWithDate>): List<UserWithPickPercentage
     return availableResults + unavailableResults
 }
 
-fun pickUserFromWeightedList(users: MutableList<UserWithDate>): UserWithDate? {
+fun currentDateString(): String = Clock.System.now()
+    .toLocalDateTime(TimeZone.currentSystemDefault())
+    .format(kotlinx.datetime.LocalDateTime.Formats.ISO)
+
+fun pickUserFromWeightedList(users: List<UserWithDate>): UserWithDate? {
     val weightedUsers = weightUsers(users).filter { it.isAvailable }
     if (weightedUsers.isEmpty()) return null
 
@@ -59,22 +63,7 @@ fun pickUserFromWeightedList(users: MutableList<UserWithDate>): UserWithDate? {
     weightedUsers.fold(0.0) { cumulativeWeight, user ->
         val newCumulativeWeight = cumulativeWeight + user.pickPercentage
         if (randomValue <= newCumulativeWeight) {
-            val currentInstant = Clock.System.now()
-            val currentDate = currentInstant
-                .toLocalDateTime(TimeZone.currentSystemDefault())
-                .format(kotlinx.datetime.LocalDateTime.Formats.ISO)
-
-            val updatedUser = UserWithDate(
-                name = user.name,
-                dateLastPicked = currentDate,
-                isAvailable = true
-            )
-
-            users.removeIf { it.name == user.name }
-
-            users.add(updatedUser)
-
-            return updatedUser
+            return users.first { it.name == user.name }
         }
         newCumulativeWeight
     }

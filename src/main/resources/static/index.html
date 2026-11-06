@@ -110,6 +110,28 @@
         flex: none;
         margin: 0;
       }
+      dialog {
+        border: none;
+        border-radius: 12px;
+        padding: 1.5rem 2rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+        text-align: center;
+      }
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.4);
+      }
+      .dialog-actions {
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+      }
+      .decline-button {
+        background: #6b7280;
+      }
+      .decline-button:hover {
+        background: #4b5563;
+      }
       .error {
         color: #b91c1c;
         margin-top: 1rem;
@@ -134,6 +156,14 @@
       <ul id="userList"></ul>
     </div>
 
+    <dialog id="pickDialog">
+      <p id="pickDialogText"></p>
+      <div class="dialog-actions">
+        <button id="agreeButton">Agree</button>
+        <button id="declineButton" class="decline-button">Decline</button>
+      </div>
+    </dialog>
+
     <script>
       const userList = document.getElementById('userList');
       const pickButton = document.getElementById('pickButton');
@@ -141,6 +171,10 @@
       const newUserName = document.getElementById('newUserName');
       const pickedUser = document.getElementById('pickedUser');
       const errorBox = document.getElementById('error');
+      const pickDialog = document.getElementById('pickDialog');
+      const pickDialogText = document.getElementById('pickDialogText');
+      const agreeButton = document.getElementById('agreeButton');
+      const declineButton = document.getElementById('declineButton');
 
       function formatLastPicked(dateString) {
         const date = new Date(dateString);
@@ -269,6 +303,24 @@
         await fetchUsers();
       }
 
+      function askAgreement(name) {
+        return new Promise((resolve) => {
+          pickDialogText.textContent = `${name} has been picked. Do you agree?`;
+          const finish = (agreed) => {
+            agreeButton.onclick = declineButton.onclick = pickDialog.oncancel = null;
+            pickDialog.close();
+            resolve(agreed);
+          };
+          agreeButton.onclick = () => finish(true);
+          declineButton.onclick = () => finish(false);
+          pickDialog.oncancel = (event) => {
+            event.preventDefault();
+            finish(false);
+          };
+          pickDialog.showModal();
+        });
+      }
+
       async function pickUser() {
         errorBox.style.display = 'none';
         pickedUser.style.display = 'none';
@@ -279,7 +331,19 @@
         }
 
         const selectedUser = await response.json();
-        pickedUser.textContent = `Picked user: ${selectedUser.name}`;
+        const agreed = await askAgreement(selectedUser.name);
+
+        if (agreed) {
+          const confirmResponse = await fetch(`/users/${encodeURIComponent(selectedUser.name)}/confirm`, {
+            method: 'POST'
+          });
+          if (!confirmResponse.ok) {
+            throw new Error('Could not confirm the pick');
+          }
+          pickedUser.textContent = `Picked user: ${selectedUser.name}`;
+        } else {
+          pickedUser.textContent = `${selectedUser.name} declined to be picked`;
+        }
         pickedUser.style.display = 'block';
 
         await fetchUsers();

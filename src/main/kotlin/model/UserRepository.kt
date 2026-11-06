@@ -4,6 +4,7 @@ interface UserRepository {
     suspend fun allUsers(): List<UserWithPickPercentage>
     suspend fun userByName(name: String): UserWithDate?
     suspend fun pickUser(): UserWithDate?
+    suspend fun confirmPick(name: String): UserWithDate?
     suspend fun addUser(userWithDate: UserWithDate)
     suspend fun setAvailability(name: String, isAvailable: Boolean): Boolean
     suspend fun removeUser(name: String): Boolean

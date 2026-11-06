@@ -46,12 +46,20 @@ class FakeUserRepositoryTest {
     }
 
     @Test
-    fun `test pickUser updates dateLastPicked`() = runTest {
-        val pickedUser = sut.pickUser()
-        assert(pickedUser != null)
-        val updatedUser = sut.userByName(pickedUser!!.name)
-        assert(updatedUser != null)
-        assert(updatedUser?.dateLastPicked != "2026-10-23T10:33:19Z")
+    fun `test pickUser does not update dateLastPicked until confirmed`() = runTest {
+        val pickedUser = sut.pickUser()!!
+        assert(sut.userByName(pickedUser.name)?.dateLastPicked == "2026-10-23T10:33:19Z")
+
+        val confirmed = sut.confirmPick(pickedUser.name)
+        assert(confirmed?.dateLastPicked != "2026-10-23T10:33:19Z")
+        assert(sut.userByName(pickedUser.name)?.dateLastPicked == confirmed?.dateLastPicked)
+    }
+
+    @Test
+    fun `test confirmPick returns null for unknown or unavailable user`() = runTest {
+        sut.setAvailability("Andy", false)
+        assert(sut.confirmPick("Andy") == null)
+        assert(sut.confirmPick("Nobody") == null)
     }
 
     @Test

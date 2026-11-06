@@ -18,6 +18,14 @@ class FakeUserRepository : UserRepository {
         return pickUserFromWeightedList(userWithDates)
     }
 
+    override suspend fun confirmPick(name: String): UserWithDate? {
+        val index = userWithDates.indexOfFirst { it.name == name && it.isAvailable }
+        if (index == -1) return null
+        val updated = userWithDates[index].copy(dateLastPicked = currentDateString())
+        userWithDates[index] = updated
+        return updated
+    }
+
     override suspend fun addUser(userWithDate: UserWithDate) {
         if (userByName(userWithDate.name) != null) {
             throw IllegalStateException("Cannot duplicate task names!")

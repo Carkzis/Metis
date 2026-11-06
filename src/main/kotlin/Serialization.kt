@@ -88,6 +88,13 @@ suspend fun Application.configureSerialization() {
                 }
             }
 
+            post("/{userName}/confirm") {
+                val name = call.parameters["userName"] ?: return@post call.respond(HttpStatusCode.BadRequest)
+
+                val user = repository.confirmPick(name) ?: return@post call.respond(HttpStatusCode.NotFound)
+                call.respond(user)
+            }
+
             delete("/{userName}") {
                 val user = call.parameters["userName"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
 
