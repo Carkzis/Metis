@@ -8,19 +8,20 @@
       body {
         font-family: Arial, sans-serif;
         margin: 2rem;
-        background: #f4f7fb;
-        color: #1f2937;
+        background: #000000;
+        color: #ec4899;
       }
       .container {
         max-width: 700px;
         margin: 0 auto;
-        background: white;
+        background: #1f1f23;
         border-radius: 12px;
         padding: 2rem;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
       }
       h1 {
         margin-top: 0;
+        text-align: center;
       }
       .controls {
         display: flex;
@@ -30,13 +31,16 @@
       input {
         flex: 1;
         padding: 0.75rem;
-        border: 1px solid #d1d5db;
+        border: 1px solid #ec4899;
         border-radius: 8px;
         font-size: 1rem;
+        background: #2a2a30;
+        color: #f472b6;
       }
       button {
-        background: #2563eb;
-        color: white;
+        background: #db2777;
+        color: #ffffff;
+        font-weight: bold;
         border: none;
         border-radius: 8px;
         padding: 0.75rem 1.25rem;
@@ -44,23 +48,34 @@
         cursor: pointer;
       }
       button:hover {
-        background: #1d4ed8;
+        background: #be185d;
+      }
+      button:disabled {
+        background: #6b7280;
+        color: #1f2937;
+        cursor: not-allowed;
       }
       .remove-button {
-        background: #dc2626;
+        background: #831843;
+        color: #fce7f3;
         padding: 0.5rem 0.75rem;
         font-size: 0.875rem;
       }
       .remove-button:hover {
-        background: #b91c1c;
+        background: #6b1237;
+      }
+      #pickButton {
+        display: block;
+        margin: 0 auto;
       }
       .picked-user {
         margin-top: 1rem;
         padding: 1rem;
         border-radius: 8px;
-        background: #ecfdf5;
-        color: #065f46;
+        background: #2a2a30;
+        color: #ec4899;
         font-weight: bold;
+        text-align: center;
       }
       ul {
         list-style: none;
@@ -72,12 +87,16 @@
         align-items: center;
         gap: 1rem;
         padding: 0.75rem 0.5rem;
-        border-bottom: 1px solid #e5e7eb;
+        border-bottom: 1px solid #3f3f46;
       }
       .user-info {
-        display: flex;
+        display: grid;
+        grid-template-columns: 10rem 7rem auto;
         align-items: center;
         gap: 0.75rem;
+      }
+      .user-name {
+        overflow-wrap: anywhere;
       }
       .user-meta {
         display: flex;
@@ -87,30 +106,58 @@
       }
       .percentage {
         font-weight: bold;
-        color: #374151;
+        color: #ec4899;
       }
       .last-picked {
         font-size: 0.8rem;
-        color: #6b7280;
+        color: #ec4899;
+        opacity: 0.75;
       }
       .unavailable .user-name,
       .unavailable .percentage,
       .unavailable .last-picked {
-        color: #9ca3af;
+        color: #6b7280;
       }
       .availability-toggle {
         display: flex;
         align-items: center;
         gap: 0.25rem;
         font-size: 0.8rem;
-        color: #6b7280;
+        color: #ec4899;
         cursor: pointer;
       }
       .availability-toggle input {
         flex: none;
         margin: 0;
       }
+      .wheel-wrapper {
+        position: relative;
+        width: 320px;
+        height: 320px;
+        margin: 1.5rem auto;
+      }
+      #wheel {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+      }
+      .wheel-pointer {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 12px solid transparent;
+        border-right: 12px solid transparent;
+        border-top: 24px solid #db2777;
+        z-index: 1;
+      }
       dialog {
+        background: #1f1f23;
+        color: #ec4899;
         border: none;
         border-radius: 12px;
         padding: 1.5rem 2rem;
@@ -127,13 +174,15 @@
         margin-top: 1.5rem;
       }
       .decline-button {
-        background: #6b7280;
+        background: #831843;
+        color: #fce7f3;
       }
       .decline-button:hover {
-        background: #4b5563;
+        background: #6b1237;
       }
       .error {
-        color: #b91c1c;
+        color: #f87171;
+        text-align: center;
         margin-top: 1rem;
       }
     </style>
@@ -145,6 +194,11 @@
       <div class="controls">
         <input id="newUserName" type="text" placeholder="Enter new team member name" />
         <button id="addUserButton">Add team member</button>
+      </div>
+
+      <div class="wheel-wrapper">
+        <div class="wheel-pointer"></div>
+        <canvas id="wheel" width="640" height="640"></canvas>
       </div>
 
       <button id="pickButton">Pick a team member</button>
@@ -175,6 +229,93 @@
       const pickDialogText = document.getElementById('pickDialogText');
       const agreeButton = document.getElementById('agreeButton');
       const declineButton = document.getElementById('declineButton');
+
+      const wheel = document.getElementById('wheel');
+      const wheelCtx = wheel.getContext('2d');
+      let wheelNames = [];
+      let wheelRotation = 0;
+
+      function drawWheel() {
+        const size = wheel.width;
+        const center = size / 2;
+        const count = wheelNames.length;
+        wheelCtx.clearRect(0, 0, size, size);
+
+        if (count === 0) {
+          wheelCtx.fillStyle = '#e5e7eb';
+          wheelCtx.beginPath();
+          wheelCtx.arc(center, center, center, 0, Math.PI * 2);
+          wheelCtx.fill();
+          wheelCtx.fillStyle = '#6b7280';
+          wheelCtx.font = '28px Arial';
+          wheelCtx.textAlign = 'center';
+          wheelCtx.fillText('No team members available', center, center);
+          return;
+        }
+
+        const segment = (Math.PI * 2) / count;
+        wheelNames.forEach((name, i) => {
+          const start = -Math.PI / 2 + i * segment;
+          wheelCtx.beginPath();
+          wheelCtx.moveTo(center, center);
+          wheelCtx.arc(center, center, center, start, start + segment);
+          wheelCtx.closePath();
+          wheelCtx.fillStyle = `hsl(${(i * 360) / count}, 70%, 60%)`;
+          wheelCtx.fill();
+          wheelCtx.strokeStyle = 'white';
+          wheelCtx.lineWidth = 3;
+          wheelCtx.stroke();
+
+          wheelCtx.save();
+          wheelCtx.translate(center, center);
+          wheelCtx.rotate(start + segment / 2);
+          wheelCtx.fillStyle = '#111827';
+          wheelCtx.font = 'bold 28px Arial';
+          wheelCtx.textAlign = 'right';
+          wheelCtx.textBaseline = 'middle';
+          wheelCtx.fillText(name.length > 14 ? `${name.slice(0, 13)}…` : name, center - 24, 0);
+          wheelCtx.restore();
+        });
+      }
+
+      function updateWheel(users) {
+        const names = users
+          .filter((user) => user.isAvailable)
+          .map((user) => user.name)
+          .sort((a, b) => a.localeCompare(b));
+
+        if (names.join('\n') === wheelNames.join('\n')) return;
+
+        wheelNames = names;
+        wheelRotation = 0;
+        wheel.style.transition = 'none';
+        wheel.style.transform = 'rotate(0deg)';
+        drawWheel();
+      }
+
+      function spinWheelTo(name) {
+        const index = wheelNames.indexOf(name);
+        if (index === -1) return Promise.resolve();
+
+        const segmentDeg = 360 / wheelNames.length;
+        const jitter = (Math.random() - 0.5) * segmentDeg * 0.7;
+        const targetAngle = (((-(index + 0.5) * segmentDeg + jitter) % 360) + 360) % 360;
+        const currentAngle = ((wheelRotation % 360) + 360) % 360;
+        wheelRotation += 5 * 360 + ((targetAngle - currentAngle + 360) % 360);
+
+        return new Promise((resolve) => {
+          const done = () => {
+            wheel.removeEventListener('transitionend', done);
+            clearTimeout(timer);
+            resolve();
+          };
+          const timer = setTimeout(done, 5500);
+          wheel.addEventListener('transitionend', done);
+          wheel.style.transition = '';
+          void wheel.offsetWidth;
+          wheel.style.transform = `rotate(${wheelRotation}deg)`;
+        });
+      }
 
       function formatLastPicked(dateString) {
         const date = new Date(dateString);
@@ -213,6 +354,7 @@
         const response = await fetch('/users');
         if (!response.ok) throw new Error('Failed to load team members');
         const users = await response.json();
+        updateWheel(users);
 
         userList.innerHTML = users
           .map(
@@ -331,6 +473,7 @@
         }
 
         const selectedUser = await response.json();
+        await spinWheelTo(selectedUser.name);
         const agreed = await askAgreement(selectedUser.name);
 
         if (agreed) {
@@ -359,11 +502,14 @@
       });
 
       pickButton.addEventListener('click', async () => {
+        pickButton.disabled = true;
         try {
           await pickUser();
         } catch (err) {
           errorBox.textContent = err.message;
           errorBox.style.display = 'block';
+        } finally {
+          pickButton.disabled = false;
         }
       });
 
