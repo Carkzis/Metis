@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>User Picker</title>
+    <title>Team Member Picker</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -140,19 +140,19 @@
   </head>
   <body>
     <div class="container">
-      <h1>User Picker</h1>
+      <h1>Team Member Picker</h1>
 
       <div class="controls">
-        <input id="newUserName" type="text" placeholder="Enter new user name" />
-        <button id="addUserButton">Add user</button>
+        <input id="newUserName" type="text" placeholder="Enter new team member name" />
+        <button id="addUserButton">Add team member</button>
       </div>
 
-      <button id="pickButton">Pick a user</button>
+      <button id="pickButton">Pick a team member</button>
 
       <div id="pickedUser" class="picked-user" style="display: none;"></div>
       <div id="error" class="error" style="display: none;"></div>
 
-      <h2>Users</h2>
+      <h2>Team Members</h2>
       <ul id="userList"></ul>
     </div>
 
@@ -211,7 +211,7 @@
 
       async function fetchUsers() {
         const response = await fetch('/users');
-        if (!response.ok) throw new Error('Failed to load users');
+        if (!response.ok) throw new Error('Failed to load team members');
         const users = await response.json();
 
         userList.innerHTML = users
@@ -274,7 +274,7 @@
         });
 
         if (!response.ok) {
-          throw new Error('Could not remove user');
+          throw new Error('Could not remove team member');
         }
 
         await fetchUsers();
@@ -283,7 +283,7 @@
       async function addUser() {
         const name = newUserName.value.trim();
         if (!name) {
-          errorBox.textContent = 'Please enter a user name';
+          errorBox.textContent = 'Please enter a team member name';
           errorBox.style.display = 'block';
           return;
         }
@@ -295,7 +295,7 @@
         });
 
         if (!response.ok) {
-          throw new Error('Could not add user');
+          throw new Error('Could not add team member');
         }
 
         newUserName.value = '';
@@ -327,7 +327,7 @@
 
         const response = await fetch('/users/pick');
         if (!response.ok) {
-          throw new Error('Could not pick a user');
+          throw new Error('Could not pick a team member');
         }
 
         const selectedUser = await response.json();
@@ -340,7 +340,7 @@
           if (!confirmResponse.ok) {
             throw new Error('Could not confirm the pick');
           }
-          pickedUser.textContent = `Picked user: ${selectedUser.name}`;
+          pickedUser.textContent = `Picked team member: ${selectedUser.name}`;
         } else {
           pickedUser.textContent = `${selectedUser.name} declined to be picked`;
         }
